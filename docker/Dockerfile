@@ -7,8 +7,9 @@ FROM ros:humble
 # 비대화형 설치
 ENV DEBIAN_FRONTEND=noninteractive
 
-# 시스템 의존성 설치 (재시도 로직 포함)
-RUN apt-get update -q || apt-get update -q || apt-get update -q && \
+# 시스템 의존성 설치
+# foxglove_bridge 는 별도 서비스에서 설치하므로 여기서는 제외한다.
+RUN apt-get update -q && \
     apt-get install -y -q --no-install-recommends \
     python3-pip \
     python3-colcon-common-extensions \
@@ -20,7 +21,6 @@ RUN apt-get update -q || apt-get update -q || apt-get update -q && \
     cmake \
     g++ \
     build-essential \
-    ros-humble-foxglove-bridge \
     ros-humble-vision-msgs \
     ros-humble-tf2-ros \
     ros-humble-cv-bridge \

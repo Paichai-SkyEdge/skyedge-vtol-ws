@@ -48,7 +48,7 @@ jobs:
       - name: colcon 빌드
         run: |
           source /opt/ros/humble/setup.bash
-          colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --continue-on-error || true
+          colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
         shell: bash
 
       - name: 빌드 결과 확인
@@ -56,6 +56,11 @@ jobs:
           source /opt/ros/humble/setup.bash
           source install/setup.bash
           ros2 pkg list | grep vtol
+        shell: bash
+
+      - name: Python 테스트 실행
+        run: |
+          python -m unittest discover -s test -v
         shell: bash
 
   docker_build:

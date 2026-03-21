@@ -1,4 +1,4 @@
-# 테스트 명세서 v0.0.1
+# 테스트 명세서 v0.0.2
 
 > VTOL 드론 프로젝트 — Gazebo 시뮬레이션 기반 초기 검증 기준 문서
 
@@ -18,6 +18,28 @@
 ---
 
 ## 1. 목적 및 범위
+
+## 먼저 읽어야 하는 핵심 원칙
+
+초보자를 위해 이 프로젝트는 아래 원칙을 따릅니다.
+
+1. 기본 브랜치(`main`, `develop`)는 가능한 한 항상 초록 상태를 유지합니다.
+2. 아직 구현하지 않은 기능 테스트는 실패 상태로 방치하지 않고, 이유가 적힌 `skip` 으로 둡니다.
+3. 담당자가 기능 구현을 시작하면 해당 테스트의 `skip` 을 제거하고 구현과 함께 초록으로 바꿉니다.
+4. 즉, "지금 당장 전체 테스트를 돌렸을 때 빨간색이 많이 뜨는 상태"를 기본 상태로 두지 않습니다.
+
+처음 참여한 팀원은 아래 명령 하나부터 실행하면 됩니다.
+
+```bash
+python -m unittest discover -s test -v
+```
+
+기대 결과:
+
+- contract 테스트: PASS
+- waypoint_nav 단위 테스트: PASS
+- 아직 구현 전인 기능 테스트: skip
+- integration 테스트: `SIM_RUNNING=1` 이 없으면 skip
 
 ### 목적
 
@@ -108,12 +130,12 @@ test/
     test_spec_contract.py       명세 문서 + 핵심 파일 구조 검증
     test_node_entrypoints.py    모든 노드 main() 진입점 형식 검증
   unit/                   TDD 단위 테스트 — ROS2 설치 불필요
-    test_waypoint_nav.py    ✅ 구현 완료 (22 PASS)
-    test_vision_aruco.py    ❌ 구현 전 FAIL  → 비전 B 담당
-    test_vision_yolo.py     ❌ 구현 전 FAIL  → 비전 A 담당
-    test_control_task.py    ❌ 구현 전 FAIL  → 제어 B 담당
-    test_hw_gripper.py      ❌ 구현 전 FAIL  → HW A 담당
-    test_comm_lte.py        ❌ 구현 전 FAIL  → 통신 B 담당
+    test_waypoint_nav.py    ✅ 구현 완료 (PASS 유지)
+    test_vision_aruco.py    ⏸ 구현 전 skip → 비전 B 담당
+    test_vision_yolo.py     ⏸ 구현 전 skip → 비전 A 담당
+    test_control_task.py    ⏸ 구현 전 skip → 제어 B 담당
+    test_hw_gripper.py      ⏸ 구현 전 skip → HW A 담당
+    test_comm_lte.py        ⏸ 구현 전 skip → 통신 B 담당
   integration/            E2E 테스트 — SIM_RUNNING=1 환경에서만 실행
     test_tc003_takeoff.py       TC-003 PX4 토픽·노드 확인
     test_tc007_full_mission.py  TC-007 전 노드 alive·setpoint 주파수
@@ -130,18 +152,19 @@ test/
 ### TDD 작업 흐름
 
 ```
-[현재 상태]                     [구현 후 목표]
-contract: 8 PASS               contract: 8 PASS  (유지)
-unit waypoint_nav: 22 PASS     unit: 전체 PASS
-unit 나머지 5파일: 28 FAIL  →  unit 나머지: 28 PASS
+[현재 기본 상태]                 [기능 구현 시작 후 목표]
+contract: PASS                 contract: PASS 유지
+unit waypoint_nav: PASS        unit 담당 영역: PASS
+unit 나머지 5파일: skip     →  skip 제거 후 PASS
 integration: skip              integration: PASS (SIM_RUNNING=1)
 ```
 
 각 담당자 작업 순서:
-1. `test/unit/` 에서 본인 담당 파일 확인 (FAIL 상태)
-2. 파일 상단 **구현 체크리스트** 항목을 순서대로 구현
-3. `python -m unittest test.unit.test_<파일명> -v` 로 개별 확인
-4. 전체 unit 재실행 후 PR 제출
+1. `test/unit/` 에서 본인 담당 파일 확인
+2. 파일 상단의 `skip` 이유를 읽고, 구현을 시작할 때 그 `skip` 을 제거
+3. 파일 상단 **구현 체크리스트** 항목을 순서대로 구현
+4. `python -m unittest test.unit.test_<파일명> -v` 로 개별 확인
+5. 전체 테스트 재실행 후 PR 제출
 
 ---
 
