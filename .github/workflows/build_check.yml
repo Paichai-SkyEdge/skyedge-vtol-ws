@@ -1,14 +1,18 @@
-name: ROS2 Build Check
+name: Build Check
 
 on:
+  push:
+    branches:
+      - main
+      - develop
   pull_request:
     branches:
       - main
       - develop
 
 jobs:
-  build:
-    name: colcon build 검증
+  ros_binary_build:
+    name: ROS 2 바이너리 빌드 검증
     runs-on: ubuntu-22.04
     container:
       image: ros:humble
@@ -17,11 +21,29 @@ jobs:
       - name: 코드 체크아웃
         uses: actions/checkout@v4
 
-      - name: rosdep 초기화 및 의존성 설치
+      - name: 빌드 도구 및 ROS 의존성 설치
         run: |
           apt-get update -q
+          apt-get install -y -q \
+            git \
+            python3-pip \
+            python3-colcon-common-extensions \
+            python3-rosdep \
+            python3-serial \
+            ros-humble-vision-msgs \
+            ros-humble-tf2-ros \
+            ros-humble-cv-bridge
+          pip3 install --no-cache-dir opencv-python ultralytics numpy pyserial
+
+      - name: 외부 소스 의존성 준비
+        run: |
+          git clone --depth 1 https://github.com/PX4/px4_msgs.git src/px4_msgs
+
+      - name: rosdep 초기화 및 의존성 설치
+        run: |
+          rosdep init || true
           rosdep update
-          rosdep install --from-paths src --ignore-src -r -y
+          rosdep install --from-paths src --ignore-src -r -y --rosdistro humble
 
       - name: colcon 빌드
         run: |
@@ -35,3 +57,22 @@ jobs:
           source install/setup.bash
           ros2 pkg list | grep vtol
         shell: bash
+
+  docker_build:
+    name: Docker 이미지 빌드 검증
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Docker Buildx 설정
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker 이미지 빌드
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          push: false
+          tags: skyedge-vtol-ws:ci
