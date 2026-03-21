@@ -9,15 +9,38 @@
 - 제어 패키지들이 PX4 또는 비전 결과를 바탕으로 기체를 제어합니다.
 - 하드웨어 / 통신 패키지는 외부 장치와 연결됩니다.
 
+## PX4 통신 구조 (uXRCE-DDS)
+
+ROS2와 PX4는 직접 연결되지 않습니다. Micro XRCE-DDS Agent가 중간에서 브리지 역할을 합니다.
+
+```text
+PX4 SITL / 실기체
+    │  UDP 8888
+    ▼
+MicroXRCEAgent          ← xrce_agent 컨테이너 (또는 네이티브)
+    │  DDS
+    ▼
+ROS2 토픽 (/drone1/fmu/in|out/...)
+    │
+    ▼
+vtol_control_nav 등 ROS2 노드
+```
+
+- PX4 내부 uORB 토픽이 uXRCE-DDS를 통해 ROS2 토픽으로 노출됩니다.
+- 네임스페이스 `drone1`은 `PX4_UXRCE_DDS_NS=drone1`으로 설정됩니다.
+- 시뮬 실행 방법은 [simulation.md](simulation.md)를 참고하세요.
+
 ## 큰 흐름으로 보기
 
 ```text
+[PX4] ──uXRCE-DDS──> [MicroXRCEAgent] ──DDS──> ROS2 토픽
+
 카메라 입력
   ├─> vtol_vision_yolo   ──> 객체 탐지 결과
   └─> vtol_vision_aruco  ──> 마커 위치 추정 결과
 
-PX4 상태 정보
-  └─> vtol_control_nav   ──> 기체 명령 전송
+PX4 상태 정보 (/drone1/fmu/out/...)
+  └─> vtol_control_nav   ──> 기체 명령 전송 (/drone1/fmu/in/...)
 
 비전 결과 + 상태 정보
   └─> vtol_control_task  ──> 정밀 작업 / 착륙 / 그리퍼 명령
