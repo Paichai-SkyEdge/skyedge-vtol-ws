@@ -4,7 +4,7 @@ unit › vtol_hw_gripper › ArduinoCmdNode
 관련 명세: TC-007 통합 미션
 담당자:   HW A
 
-구현 전 상태: 아래 테스트 전체 FAIL
+구현 전 상태: skip — 아래 @unittest.skip 제거 후 구현 시작
 구현 후 목표: 전체 PASS
 
 구현 체크리스트:
@@ -33,6 +33,7 @@ from arduino_cmd_node import ArduinoCmdNode
 
 
 @unittest.skip(_SKIP_REASON)
+@unittest.skip('미구현 — 구현 시작 시 이 줄을 제거하세요')
 class TestGripperInit(unittest.TestCase):
     """초기화: 토픽 연결 및 파라미터 검증"""
 
@@ -53,6 +54,7 @@ class TestGripperInit(unittest.TestCase):
 
 
 @unittest.skip(_SKIP_REASON)
+@unittest.skip('미구현 — 구현 시작 시 이 줄을 제거하세요')
 class TestGripperSerial(unittest.TestCase):
     """시리얼 명령 전송 검증"""
 

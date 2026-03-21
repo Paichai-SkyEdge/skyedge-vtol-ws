@@ -4,7 +4,7 @@ unit › vtol_comm_lte › TelemetryNode
 관련 명세: TC-002 상태 수신
 담당자:   통신 B
 
-구현 전 상태: 아래 테스트 전체 FAIL
+구현 전 상태: skip — 아래 @unittest.skip 제거 후 구현 시작
 구현 후 목표: 전체 PASS
 
 구현 체크리스트:
@@ -33,6 +33,7 @@ from telemetry_node import TelemetryNode
 
 
 @unittest.skip(_SKIP_REASON)
+@unittest.skip('미구현 — 구현 시작 시 이 줄을 제거하세요')
 class TestTelemetryInit(unittest.TestCase):
     """초기화: 토픽 연결 및 파라미터 검증"""
 
@@ -57,6 +58,7 @@ class TestTelemetryInit(unittest.TestCase):
 
 
 @unittest.skip(_SKIP_REASON)
+@unittest.skip('미구현 — 구현 시작 시 이 줄을 제거하세요')
 class TestTelemetrySend(unittest.TestCase):
     """GCS 전송 로직 검증"""
 

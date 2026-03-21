@@ -42,12 +42,12 @@ _PX4_QOS = QoSProfile(
 class WaypointNavNode(Node):
     """PX4 VTOL 웨이포인트 비행 노드 (Offboard 포지션 제어)"""
 
-    _IDLE     = 'IDLE'
-    _ARMING   = 'ARMING'
-    _TAKEOFF  = 'TAKEOFF'
+    _IDLE = 'IDLE'
+    _ARMING = 'ARMING'
+    _TAKEOFF = 'TAKEOFF'
     _NAVIGATE = 'NAVIGATE'
-    _LAND     = 'LAND'
-    _DONE     = 'DONE'
+    _LAND = 'LAND'
+    _DONE = 'DONE'
 
     def __init__(self):
         super().__init__('waypoint_nav_node')
@@ -57,13 +57,13 @@ class WaypointNavNode(Node):
         self.declare_parameter('vtol.takeoff_altitude', 5.0)
         self.declare_parameter('vtol.cruise_altitude', 30.0)
 
-        drone_id    = self.get_parameter('vtol.drone_id').value
+        drone_id = self.get_parameter('vtol.drone_id').value
         takeoff_alt = self.get_parameter('vtol.takeoff_altitude').value
-        cruise_alt  = self.get_parameter('vtol.cruise_altitude').value
+        cruise_alt = self.get_parameter('vtol.cruise_altitude').value
 
         # NED 좌표계: 위쪽이 음수
         self._takeoff_z = -abs(takeoff_alt)
-        self._cruise_z  = -abs(cruise_alt)
+        self._cruise_z = -abs(cruise_alt)
 
         ns = f'/{drone_id}'
 

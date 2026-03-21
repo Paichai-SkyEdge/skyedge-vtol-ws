@@ -1,4 +1,4 @@
-# 테스트 명세서 v0.0.2
+# 테스트 명세서 v0.0.1
 
 > VTOL 드론 프로젝트 — Gazebo 시뮬레이션 기반 초기 검증 기준 문서
 
@@ -17,16 +17,13 @@
 
 ---
 
-## 1. 목적 및 범위
-
-## 먼저 읽어야 하는 핵심 원칙
+## 핵심 원칙
 
 초보자를 위해 이 프로젝트는 아래 원칙을 따릅니다.
 
-1. 기본 브랜치(`main`, `develop`)는 가능한 한 항상 초록 상태를 유지합니다.
-2. 아직 구현하지 않은 기능 테스트는 실패 상태로 방치하지 않고, 이유가 적힌 `skip` 으로 둡니다.
-3. 담당자가 기능 구현을 시작하면 해당 테스트의 `skip` 을 제거하고 구현과 함께 초록으로 바꿉니다.
-4. 즉, "지금 당장 전체 테스트를 돌렸을 때 빨간색이 많이 뜨는 상태"를 기본 상태로 두지 않습니다.
+1. 기본 브랜치(`main`, `develop`)는 항상 초록 상태를 유지합니다.
+2. 아직 구현하지 않은 기능 테스트는 실패 상태로 두지 않고, 이유가 적힌 `@unittest.skip` 으로 둡니다.
+3. 담당자가 구현을 시작하면 해당 테스트의 `skip` 을 제거하고 구현과 함께 초록으로 바꿉니다.
 
 처음 참여한 팀원은 아래 명령 하나부터 실행하면 됩니다.
 
@@ -34,12 +31,11 @@
 python -m unittest discover -s test -v
 ```
 
-기대 결과:
+기대 결과: contract PASS + waypoint_nav PASS + 나머지 **skip** (빨간색 없음)
 
-- contract 테스트: PASS
-- waypoint_nav 단위 테스트: PASS
-- 아직 구현 전인 기능 테스트: skip
-- integration 테스트: `SIM_RUNNING=1` 이 없으면 skip
+---
+
+## 1. 목적 및 범위
 
 ### 목적
 
@@ -215,7 +211,7 @@ IDLE (10 tick 대기)
 
 ---
 
-### 4-2. ArucoDetectNode (vtol_vision_aruco) ❌ 구현 전
+### 4-2. ArucoDetectNode (vtol_vision_aruco) ⏸ 구현 전 (skip)
 
 **파일:** `test/unit/test_vision_aruco.py`
 **담당자:** 비전 B
@@ -241,7 +237,7 @@ IDLE (10 tick 대기)
 
 ---
 
-### 4-3. YoloDetectNode (vtol_vision_yolo) ❌ 구현 전
+### 4-3. YoloDetectNode (vtol_vision_yolo) ⏸ 구현 전 (skip)
 
 **파일:** `test/unit/test_vision_yolo.py`
 **담당자:** 비전 A
@@ -267,7 +263,7 @@ IDLE (10 tick 대기)
 
 ---
 
-### 4-4. PrecisionTaskNode (vtol_control_task) ❌ 구현 전
+### 4-4. PrecisionTaskNode (vtol_control_task) ⏸ 구현 전 (skip)
 
 **파일:** `test/unit/test_control_task.py`
 **담당자:** 제어 B
@@ -296,7 +292,7 @@ IDLE (10 tick 대기)
 
 ---
 
-### 4-5. ArduinoCmdNode (vtol_hw_gripper) ❌ 구현 전
+### 4-5. ArduinoCmdNode (vtol_hw_gripper) ⏸ 구현 전 (skip)
 
 **파일:** `test/unit/test_hw_gripper.py`
 **담당자:** HW A
@@ -321,7 +317,7 @@ IDLE (10 tick 대기)
 
 ---
 
-### 4-6. TelemetryNode (vtol_comm_lte) ❌ 구현 전
+### 4-6. TelemetryNode (vtol_comm_lte) ⏸ 구현 전 (skip)
 
 **파일:** `test/unit/test_comm_lte.py`
 **담당자:** 통신 B
@@ -534,17 +530,17 @@ waypoints:
 
 ## 6. 성공 기준 요약
 
-| 레이어 | 목표 | 현재 상태 |
-|--------|------|-----------|
-| contract (8개) | 전체 PASS | ✅ 8/8 PASS |
-| unit waypoint_nav (22개) | 전체 PASS | ✅ 22/22 PASS |
-| unit vision_aruco (5개) | 구현 후 PASS | ❌ 0/5 (미구현) |
-| unit vision_yolo (5개) | 구현 후 PASS | ❌ 0/5 (미구현) |
-| unit control_task (7개) | 구현 후 PASS | ❌ 0/7 (미구현) |
-| unit hw_gripper (5개) | 구현 후 PASS | ❌ 0/5 (미구현) |
-| unit comm_lte (6개) | 구현 후 PASS | ❌ 0/6 (미구현) |
-| integration TC-003 (4개) | SIM_RUNNING=1 PASS | ⏭ skip |
-| integration TC-007 (3개) | SIM_RUNNING=1 PASS | ⏭ skip |
+| 레이어 | 테스트 수 | 현재 상태 | 목표 |
+|--------|-----------|-----------|------|
+| contract | 8개 | ✅ PASS | PASS 유지 |
+| unit waypoint_nav | 22개 | ✅ PASS | PASS 유지 |
+| unit vision_aruco | 5개 | ⏸ skip | 비전 B 구현 후 PASS |
+| unit vision_yolo | 5개 | ⏸ skip | 비전 A 구현 후 PASS |
+| unit control_task | 7개 | ⏸ skip | 제어 B 구현 후 PASS |
+| unit hw_gripper | 5개 | ⏸ skip | HW A 구현 후 PASS |
+| unit comm_lte | 6개 | ⏸ skip | 통신 B 구현 후 PASS |
+| integration TC-003 | 4개 | ⏸ skip | SIM_RUNNING=1 시 PASS |
+| integration TC-007 | 3개 | ⏸ skip | SIM_RUNNING=1 시 PASS |
 
 ---
 

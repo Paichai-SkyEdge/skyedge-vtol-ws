@@ -60,7 +60,7 @@ jobs:
 
       - name: Python 테스트 실행
         run: |
-          python -m unittest discover -s test -v
+          python3 -m unittest discover -s test -v
         shell: bash
 
   docker_build:

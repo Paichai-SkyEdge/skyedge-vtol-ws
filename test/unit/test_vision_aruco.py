@@ -4,7 +4,7 @@ unit › vtol_vision_aruco › ArucoDetectNode
 관련 명세: TC-002 상태 수신 / TC-007 통합 미션
 담당자:   비전 B
 
-구현 전 상태: 아래 테스트 전체 FAIL
+구현 전 상태: skip — 아래 @unittest.skip 제거 후 구현 시작
 구현 후 목표: 전체 PASS
 
 구현 체크리스트:
@@ -34,6 +34,7 @@ from aruco_detect_node import ArucoDetectNode
 
 
 @unittest.skip(_SKIP_REASON)
+@unittest.skip('미구현 — 구현 시작 시 이 줄을 제거하세요')
 class TestArucoInit(unittest.TestCase):
     """초기화: 토픽 연결 검증"""
 
@@ -54,6 +55,7 @@ class TestArucoInit(unittest.TestCase):
 
 
 @unittest.skip(_SKIP_REASON)
+@unittest.skip('미구현 — 구현 시작 시 이 줄을 제거하세요')
 class TestArucoCallback(unittest.TestCase):
     """이미지 콜백 동작 검증"""
 

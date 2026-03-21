@@ -4,7 +4,7 @@ unit › vtol_control_task › PrecisionTaskNode
 관련 명세: TC-006 착륙 / TC-007 통합 미션
 담당자:   제어 B
 
-구현 전 상태: 아래 테스트 전체 FAIL
+구현 전 상태: skip — 아래 @unittest.skip 제거 후 구현 시작
 구현 후 목표: 전체 PASS
 
 구현 체크리스트:
@@ -35,6 +35,7 @@ from precision_task_node import PrecisionTaskNode
 
 
 @unittest.skip(_SKIP_REASON)
+@unittest.skip('미구현 — 구현 시작 시 이 줄을 제거하세요')
 class TestPrecisionTaskInit(unittest.TestCase):
     """초기화: 토픽 연결 검증"""
 
@@ -63,6 +64,7 @@ class TestPrecisionTaskInit(unittest.TestCase):
 
 
 @unittest.skip(_SKIP_REASON)
+@unittest.skip('미구현 — 구현 시작 시 이 줄을 제거하세요')
 class TestPrecisionTaskStateMachine(unittest.TestCase):
     """상태 머신 기본 전이 검증"""
 
