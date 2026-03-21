@@ -1,5 +1,8 @@
 # VTOL 프로젝트
 
+[![Build Check](https://github.com/zeetee1235/skyedge-vtol-ws/actions/workflows/build_check.yml/badge.svg?branch=main)](https://github.com/zeetee1235/skyedge-vtol-ws/actions/workflows/build_check.yml)
+[![Python Lint Check](https://github.com/zeetee1235/skyedge-vtol-ws/actions/workflows/lint_check.yml/badge.svg?branch=main)](https://github.com/zeetee1235/skyedge-vtol-ws/actions/workflows/lint_check.yml)
+
 VTOL 기체(고정익 ↔ 호버링 전환)를 이용한 자율 임무 수행 시스템입니다.
 
 이 저장소는 ROS 2 Humble 기반의 워크스페이스이며, 비전 인식, 항법 제어, 정밀 착륙, 하드웨어 제어, 텔레메트리 기능을 패키지 단위로 나누어 관리합니다.
@@ -186,10 +189,20 @@ git push -u origin feature/<작업이름>
 
 그다음 GitHub에서 `develop` 대상으로 Pull Request를 생성합니다.
 
+## 자동 검사
+
+이 저장소는 GitHub Actions로 아래 항목을 자동 검사합니다.
+
+- ROS 2 워크스페이스 `colcon build` 검증
+- `docker/Dockerfile` 기준 Docker 이미지 빌드 검증
+
+즉, `main` 또는 `develop` 대상으로 push / PR을 올리면 최소한 "워크스페이스가 빌드되는지", "Docker 이미지가 만들어지는지"를 자동으로 확인할 수 있습니다.
+
 ## 문서 목록
 
 - [CONTRIBUTING.md](CONTRIBUTING.md)
 - [docs/git_basics.md](docs/git_basics.md)
+- [docs/github_issues_guide.md](docs/github_issues_guide.md)
 - [docs/architecture.md](docs/architecture.md)
 - [docs/foxglove_setup.md](docs/foxglove_setup.md)
 - [docs/ros2_study_links.md](docs/ros2_study_links.md)

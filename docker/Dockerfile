@@ -45,7 +45,10 @@ RUN echo "source /vtol_ws/install/setup.bash 2>/dev/null || true" >> ~/.bashrc
 # 빌드
 COPY src/ /vtol_ws/src/
 RUN /bin/bash -c \
-    "source /opt/ros/humble/setup.bash && \
+    "set -e && \
+     source /opt/ros/humble/setup.bash && \
+     git clone --depth 1 https://github.com/PX4/px4_msgs.git /tmp/px4_msgs && \
+     cp -r /tmp/px4_msgs /vtol_ws/src/px4_msgs && \
      rosdep install --from-paths src --ignore-src -r -y && \
      colcon build --symlink-install"
 

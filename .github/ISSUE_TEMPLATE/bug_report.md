@@ -1,7 +1,7 @@
 ---
-name: Bug Report
+name: 버그 제보
 about: 버그 발생 시 사용
-title: '[BUG] '
+title: '[버그] '
 labels: bug
 assignees: ''
 ---
@@ -29,3 +29,4 @@ assignees: ''
 - Docker 사용 여부:
 
 ## 로그 / 스크린샷
+<!-- 터미널 로그, 에러 메시지, Foxglove 화면 등을 첨부 -->

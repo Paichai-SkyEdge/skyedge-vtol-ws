@@ -244,7 +244,7 @@ git status
 ### 5. 커밋 만들기
 
 ```bash
-git commit -m "docs: add beginner-friendly git workflow guide"
+git commit -m "docs: 초보자용 Git 작업 가이드 추가"
 ```
 
 커밋 메시지는 짧고 분명하게 작성합니다.
@@ -252,9 +252,9 @@ git commit -m "docs: add beginner-friendly git workflow guide"
 좋은 예:
 
 ```text
-feat: add confidence threshold parameter to yolo node
-fix: handle empty camera frames in aruco detector
-docs: expand contribution guide for beginners
+feat: yolo 노드 탐지 신뢰도 임계값 파라미터 추가
+fix: aruco 노드 빈 카메라 프레임 처리
+docs: 초보자용 기여 가이드 보강
 ```
 
 피하면 좋은 예:
@@ -305,15 +305,22 @@ git push
 ### PR 제목 예시
 
 ```text
-[vtol_vision_yolo] Add confidence threshold parameter
-[docs] Expand beginner contribution guide
+[vtol_vision_yolo] 탐지 신뢰도 임계값 파라미터 추가
+[docs] 초보자용 기여 가이드 보강
+```
+
+관련 이슈가 있다면 PR 본문에 아래처럼 연결하는 것을 권장합니다.
+
+```text
+Closes #12
+관련 이슈 #18
 ```
 
 ### PR 본문 예시
 
 ```text
 ## 변경 내용
-- YOLO 탐지 confidence threshold 파라미터 추가
+- YOLO 탐지 신뢰도 임계값 파라미터 추가
 - 기본값과 로그 메시지 정리
 
 ## 테스트
@@ -323,6 +330,35 @@ git push
 ## 참고 사항
 - 기존 토픽 이름은 변경하지 않음
 ```
+
+## GitHub Issue 사용
+
+문제가 생기거나, 기능 제안이 있거나, 나중에 해야 할 일을 기록해야 한다면 GitHub Issue를 사용하는 것을 권장합니다.
+
+이슈는 아래 상황에서 특히 유용합니다.
+
+- 버그 발생
+- 기능 제안
+- 문서 보완 요청
+- 나중에 할 일 기록
+- 팀 논의 필요
+
+초보자용 자세한 설명은 아래 문서를 참고하세요.
+
+- [docs/github_issues_guide.md](docs/github_issues_guide.md)
+
+## GitHub Actions 자동 검사
+
+이 저장소에서는 PR 또는 주요 브랜치 push 시 자동 검사가 실행됩니다.
+
+현재 자동으로 확인하는 항목:
+
+- ROS 2 워크스페이스 빌드 가능 여부
+- Docker 이미지 빌드 가능 여부
+
+즉, 리뷰어가 코드를 직접 받아서 바로 빌드해보지 않더라도 기본적인 빌드 실패는 미리 발견할 수 있습니다.
+
+PR을 올렸다면 GitHub 화면에서 Actions 또는 체크 상태를 같이 확인하는 습관을 권장합니다.
 
 ## 작업 도중 자주 쓰는 명령
 
