@@ -1,0 +1,34 @@
+# =============================================
+# VTOL 전 패키지 공통 파라미터
+# 수정 권한: 총괄만
+# =============================================
+
+vtol:
+  drone_id: "drone1"
+  use_sim: true                    # true=시뮬, false=실기체
+
+  # 비행 파라미터
+  takeoff_altitude: 5.0            # 이륙 고도 (m)
+  cruise_altitude: 30.0            # 순항 고도 (m)
+  landing_descent_altitude: 3.0   # 정밀 착륙 시작 고도 (m)
+  max_velocity: 15.0               # 최대 속도 (m/s)
+
+  # GPS 목표 좌표 (대회 현장에서 수정)
+  waypoints:
+    - [37.123456, 127.123456, 30.0]
+    - [37.234567, 127.234567, 30.0]
+
+  # 비전
+  aruco_marker_id: 0               # 착륙 지점 ArUco 마커 ID
+  yolo_confidence_threshold: 0.7
+
+  # HW
+  gripper_open_angle: 90
+  gripper_close_angle: 0
+
+  # 통신
+  lte_gcs_ip: "192.168.1.100"
+  lte_gcs_port: 14550
+
+  # Foxglove
+  foxglove_port: 8765

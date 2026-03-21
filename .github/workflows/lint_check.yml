@@ -1,0 +1,32 @@
+name: Python Lint Check
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  lint:
+    name: flake8 Python 린트
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Python 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: flake8 설치
+        run: pip install flake8
+
+      - name: 린트 실행
+        run: |
+          flake8 src/ \
+            --max-line-length=100 \
+            --exclude=__pycache__,*.pyc,.git \
+            --ignore=E501,W503 \
+            --statistics

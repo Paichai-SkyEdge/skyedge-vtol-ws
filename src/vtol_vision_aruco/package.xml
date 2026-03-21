@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>vtol_vision_aruco</name>
+  <version>0.0.1</version>
+  <description>ArUco 마커 인식 패키지</description>
+  <maintainer email="team@vtol.dev">비전B담당</maintainer>
+  <license>MIT</license>
+
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

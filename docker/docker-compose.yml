@@ -1,0 +1,62 @@
+# =============================================
+# VTOL 프로젝트 Docker Compose
+# 시뮬: docker compose --profile sim up
+# 실기체: docker compose --profile real up
+# Foxglove만: docker compose up foxglove_bridge
+# =============================================
+
+services:
+
+  # ── 시뮬레이션 환경 ──
+  vtol_sim:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    profiles: [sim]
+    environment:
+      - ROS_DOMAIN_ID=0
+      - PX4_SIM_MODEL=x500
+      - DISPLAY=${DISPLAY}
+    volumes:
+      - ../src:/vtol_ws/src
+      - /tmp/.X11-unix:/tmp/.X11-unix  # GUI (Gazebo)
+    network_mode: host
+    command: >
+      bash -c "source /opt/ros/jazzy/setup.bash &&
+               source /vtol_ws/install/setup.bash &&
+               ros2 launch vtol_bringup sim_launch.py"
+
+  # ── 실기체 환경 ──
+  vtol_real:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    profiles: [real]
+    network_mode: host
+    privileged: true          # 시리얼 포트 접근 필요
+    devices:
+      - /dev/ttyUSB0:/dev/ttyUSB0   # 아두이노 시리얼
+      - /dev/ttyACM0:/dev/ttyACM0   # PX4 시리얼
+    environment:
+      - ROS_DOMAIN_ID=0
+    volumes:
+      - ../src:/vtol_ws/src
+    command: >
+      bash -c "source /opt/ros/jazzy/setup.bash &&
+               source /vtol_ws/install/setup.bash &&
+               ros2 launch vtol_bringup real_launch.py"
+
+  # ── Foxglove 브릿지 ──
+  foxglove_bridge:
+    image: ros:jazzy
+    network_mode: host
+    environment:
+      - ROS_DOMAIN_ID=0
+    command: >
+      bash -c "apt-get update -q &&
+               apt-get install -y ros-jazzy-foxglove-bridge &&
+               source /opt/ros/jazzy/setup.bash &&
+               ros2 run foxglove_bridge foxglove_bridge
+               --ros-args -p port:=8765"
+    ports:
+      - "8765:8765"
