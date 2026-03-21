@@ -1,6 +1,37 @@
 # VTOL 프로젝트
 
-> VTOL 기체(고정익 ↔ 호버링 전환)를 이용한 자율 임무 수행 시스템
+VTOL 기체(고정익 ↔ 호버링 전환)를 이용한 자율 임무 수행 시스템입니다.
+
+이 저장소는 ROS 2 Humble 기반의 워크스페이스이며, 비전 인식, 항법 제어, 정밀 착륙, 하드웨어 제어, 텔레메트리 기능을 패키지 단위로 나누어 관리합니다.
+
+## 이 문서를 먼저 읽는 사람
+
+이 README는 아래 사람을 기준으로 작성했습니다.
+
+- 프로젝트를 처음 받는 팀원
+- Git과 GitHub가 익숙하지 않은 팀원
+- 전체 구조만 빠르게 보고 싶은 팀장 / 리뷰어
+
+처음이라면 아래 순서로 읽는 것을 권장합니다.
+
+1. 이 README로 전체 구조 파악
+2. [CONTRIBUTING.md](CONTRIBUTING.md) 로 작업 절차 확인
+3. [docs/git_basics.md](docs/git_basics.md) 로 Git 기초 확인
+4. 필요한 세부 문서 확인
+
+## 프로젝트 목적
+
+이 프로젝트의 목표는 VTOL 기체를 이용해 자율 임무를 수행할 수 있는 소프트웨어 스택을 구성하는 것입니다.
+
+예를 들어 아래 기능이 포함됩니다.
+
+- 객체 인식
+- ArUco 기반 위치 인식
+- 웨이포인트 기반 이동
+- 정밀 착륙
+- 집게발 제어
+- LTE 텔레메트리 전송
+- Foxglove 기반 모니터링
 
 ## 시스템 구성
 
@@ -14,50 +45,151 @@
 | `vtol_hw_gripper` | 집게발 제어 | HW A |
 | `vtol_comm_lte` | LTE 텔레메트리 | 통신 B |
 
+패키지 간 관계는 [docs/architecture.md](docs/architecture.md) 문서에서 더 자세히 볼 수 있습니다.
+
+## 작업 전 꼭 알아둘 점
+
+- 안정 버전 브랜치는 `main` 입니다.
+- 일상 개발 기준 브랜치는 `develop` 입니다.
+- 개인 작업은 `develop`에서 `feature/...` 브랜치를 만들어 진행합니다.
+- `main`에 직접 push 하지 않습니다.
+
+Git이 익숙하지 않다면 아래 문서를 먼저 읽는 것을 강력히 권장합니다.
+
+- [CONTRIBUTING.md](CONTRIBUTING.md)
+- [docs/git_basics.md](docs/git_basics.md)
+
 ## 빠른 시작
 
-### 1. 레포 클론
+### 1. 저장소 받기
+
+현재 저장소 주소 예시:
 
 ```bash
-git clone https://github.com/<org>/vtol_ws.git
-cd vtol_ws
+git clone https://github.com/zeetee1235/skyedge-vtol-ws.git
+cd skyedge-vtol-ws
+git switch develop
+```
+
+`git switch` 가 익숙하지 않다면 아래 명령도 가능합니다.
+
+```bash
 git checkout develop
 ```
 
-### 2. Docker 빌드 및 실행
+### 2. 환경 준비 방법 선택
+
+이 저장소는 크게 두 가지 방식으로 준비할 수 있습니다.
+
+### 방법 A. 자동 셋업 스크립트 사용
+
+Ubuntu 22.04 / ROS 2 Humble 기준으로 의존성을 설치하고 빌드까지 진행하는 방식입니다.
 
 ```bash
-# 시뮬레이션
-docker compose --profile sim up
-
-# 실기체
-docker compose --profile real up
-
-# Foxglove 모니터링 (별도 터미널)
-docker compose up foxglove_bridge
+bash setup.sh
+source ~/.bashrc
 ```
 
-### 3. Foxglove 접속
+`setup.sh` 는 다음 작업을 수행합니다.
 
-브라우저 또는 데스크탑 앱에서 `ws://localhost:8765` 접속
+- ROS 2 Humble 설치 확인 및 설치
+- 필요한 ROS 패키지 설치
+- Python 패키지 설치
+- `rosdep` 초기화 및 의존성 설치
+- `colcon build --symlink-install` 실행
+- `.bashrc` 에 ROS 및 워크스페이스 source 추가
+
+### 방법 B. Docker 사용
+
+로컬 환경 오염을 줄이고 팀 공통 환경을 맞추고 싶다면 Docker 방식을 사용할 수 있습니다.
+
+시뮬레이션:
+
+```bash
+docker compose -f docker/docker-compose.yml --profile sim up
+```
+
+실기체:
+
+```bash
+docker compose -f docker/docker-compose.yml --profile real up
+```
+
+Foxglove 브릿지만 실행:
+
+```bash
+docker compose -f docker/docker-compose.yml up foxglove_bridge
+```
+
+### 3. 빌드
+
+로컬 환경 기준:
+
+```bash
+colcon build --symlink-install
+source install/setup.bash
+```
+
+새 터미널을 열 때마다 아래 명령이 필요할 수 있습니다.
+
+```bash
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+```
+
+### 4. 실행
+
+실행 방법은 사용 환경에 따라 다릅니다.
+
+- 시뮬레이션은 Docker `sim` 프로필 사용
+- 실기체는 Docker `real` 프로필 사용
+- 모니터링은 Foxglove 브릿지 사용
+
+Foxglove 연결 방법은 [docs/foxglove_setup.md](docs/foxglove_setup.md) 문서를 참고하세요.
 
 ## 브랜치 전략
 
+```text
+main          ← 안정 버전만 유지
+  └── develop ← 팀 통합 개발
+        └── feature/<패키지명>-<기능명> ← 개인 작업
 ```
-main          ← 안정 버전만 (직접 push 금지)
-  └── develop ← 통합 개발
-        └── feature/<기능명>  ← 개인 개발
+
+간단한 원칙:
+
+- `main` 에서 직접 작업하지 않습니다.
+- 새 작업은 `develop` 에서 시작합니다.
+- 개인 작업은 `feature/...` 브랜치에서 진행합니다.
+
+예시:
+
+```bash
+git switch develop
+git pull
+git switch -c feature/vtol-vision-yolo-confidence-filter
 ```
 
-## 기여 방법
+자세한 작업 절차는 [CONTRIBUTING.md](CONTRIBUTING.md) 를 참고하세요.
 
-1. `develop`에서 `feature/<패키지명>-<기능>` 브랜치 분기
-2. 작업 완료 후 `develop`으로 PR 생성
-3. 총괄 또는 핵심 인원 1명 이상 리뷰 후 병합
-4. CI(빌드 + 린트) 통과 필수
+## 처음 기여하는 사람을 위한 가장 짧은 작업 순서
 
-## 문서
+```bash
+git switch develop
+git pull
+git switch -c feature/<작업이름>
+# 작업
+git status
+git add .
+git commit -m "feat: 설명"
+git push -u origin feature/<작업이름>
+```
 
-- [시스템 아키텍처](docs/architecture.md)
-- [Foxglove 모니터링 설정](docs/foxglove_setup.md)
-- [ROS2 학습 링크](docs/ros2_study_links.md)
+그다음 GitHub에서 `develop` 대상으로 Pull Request를 생성합니다.
+
+## 문서 목록
+
+- [CONTRIBUTING.md](CONTRIBUTING.md)
+- [docs/git_basics.md](docs/git_basics.md)
+- [docs/architecture.md](docs/architecture.md)
+- [docs/foxglove_setup.md](docs/foxglove_setup.md)
+- [docs/ros2_study_links.md](docs/ros2_study_links.md)
