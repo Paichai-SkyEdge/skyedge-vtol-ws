@@ -106,6 +106,7 @@ class WaypointNavNode(Node):
 
         # 웨이포인트 (NED local frame, 미터)
         # 실제 운영 시에는 GPS → local 변환(NavSatFix → LocalPosition) 필요
+        # 이거 지금 웨이포인트가 하드코딩된값을 그대로 써서 global_params.yaml에서 파라미터를 읽어서 쓰는 형태로 바꿔야할듯 -zeetee1235
         self._waypoints: list[tuple[float, float, float]] = [
             (0.0, 0.0, self._cruise_z),   # WP0: 이륙 지점 상공
             (100.0, 0.0, self._cruise_z),   # WP1
@@ -245,3 +246,25 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
+
+"""
+현재 수정 및 보완점 -zeetee1235
+
+VTOL → 고정익 전환 시점: 현재는 순항 고도 도달 후 바로 NAVIGATE 상태로 진입하지만, 
+실제로는 이 시점에서 VTOL → 고정익 전환 명령을 보내야 함.
+따라서 TAKEOFF → TRANSITION_TO_FW → NAVIGATE → TRANSITION_TO_MC → LAND 형태로
+상태 머신 수정 필요
+
+웨이포인트 설정: 현재는 웨이포인트가 코드 내에 하드코딩되어 있어, 
+global_params.yaml(waypoint 리스트)에서 파라미터를 읽어서 쓰는 형태로 바꿔야 함
+
+LAND 상태에서 착륙 완료 판정: 현재는 LAND 명령을 보내고 바로 DONE 상태로 진입하지만, 
+실제로는 착륙 완료 여부를 확인하는 로직이 필요함. 
+예를 들어 LAND 후 바로 DONE으로 가지 말고, 
+착륙 상태(예: landed state, arming 해제, 저속/저고도)를 확인하는 LANDING_CONFIRM 상태가 필요하다.
+
+GPS 웨이포인트 비행이라기보다 local NED 좌표 기반 웨이포인트 비행로 구현되어 있는데, 
+실제 GPS 웨이포인트 비행으로 구현하려면 NavSatFix 메시지를 구독하여 
+GPS 좌표를 local NED 좌표로 변환하는 로직이 추가로 필요함
+
+"""
