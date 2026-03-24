@@ -104,8 +104,8 @@ class SpecContractTests(unittest.TestCase):
         nav_code = WAYPOINT_NAV.read_text(encoding="utf-8")
 
         self.assertIn("declare_parameter('vtol.waypoints'", nav_code)
-        self.assertIn("_load_waypoints", nav_code)
-        self.assertIn("_parse_waypoints", nav_code)
+        self.assertIn("_reload_mission_from_params", nav_code)
+        self.assertIn("MissionPlanner", nav_code)
 
 
 if __name__ == "__main__":

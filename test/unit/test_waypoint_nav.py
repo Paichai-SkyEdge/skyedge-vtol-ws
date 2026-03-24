@@ -15,7 +15,7 @@ from mock_ros2 import install, _VehicleStatus
 install()
 
 sys.path.insert(0, str(Path(__file__).parents[2] / 'src' / 'vtol_control_nav' / 'src'))
-from waypoint_nav_node import WaypointNavNode
+from waypoint_nav_node import MissionPlanner, TrajectoryPlanner, WaypointNavNode
 
 
 # ── 헬퍼 ─────────────────────────────────────────────────────────
@@ -77,6 +77,39 @@ class TestWaypointParsing(unittest.TestCase):
         self.assertGreater(local[1][0], 0.0)
 
 
+class TestMissionPlanner(unittest.TestCase):
+    def test_invalid_gps_filtered(self):
+        planner = MissionPlanner(cruise_z=-30.0)
+        mission, gps_error = planner.build_mission(
+            frame='gps',
+            raw_waypoints=[[999.0, 127.0, 30.0], [37.0, 127.0, 30.0]],
+        )
+        self.assertTrue(gps_error)
+        self.assertEqual(len(mission), 1)
+
+
+class TestTrajectoryPlanner(unittest.TestCase):
+    def test_point_jump_returns_target(self):
+        planner = TrajectoryPlanner(mode='point_jump', max_step_m=1.0)
+        sp = planner.next_setpoint((0.0, 0.0, 0.0), (10.0, 0.0, 0.0))
+        self.assertEqual(sp, (10.0, 0.0, 0.0))
+
+    def test_linear_limits_step(self):
+        planner = TrajectoryPlanner(mode='linear', max_step_m=1.0)
+        sp = planner.next_setpoint((0.0, 0.0, 0.0), (10.0, 0.0, 0.0))
+        self.assertAlmostEqual(sp[0], 1.0, places=6)
+
+    def test_mpc_moves_toward_target_bounded(self):
+        # 실제 MPC는 부드러운 가속 프로파일을 따르므로 첫 스텝은 max_step_m보다
+        # 작을 수 있다. 핵심 보장 사항: (1) 목표 방향으로 이동, (2) 상한 준수.
+        planner = TrajectoryPlanner(mode='mpc', max_step_m=1.0)
+        sp = planner.next_setpoint((0.0, 0.0, 0.0), (10.0, 0.0, 0.0))
+        self.assertGreater(sp[0], 0.0)               # 목표 방향으로 이동
+        self.assertLessEqual(sp[0], 1.0 + 1e-9)      # max_step_m 상한 준수
+        self.assertAlmostEqual(sp[1], 0.0, places=6) # y축 변화 없음
+        self.assertAlmostEqual(sp[2], 0.0, places=6) # z축 변화 없음
+
+
 class TestReached(unittest.TestCase):
     """도달 판정 로직"""
 
@@ -102,6 +135,11 @@ class TestStateMachine(unittest.TestCase):
 
     def setUp(self):
         self.node = WaypointNavNode()
+
+    def test_state_handler_map_has_core_states(self):
+        self.assertIn(WaypointNavNode._IDLE, self.node._state_handlers)
+        self.assertIn(WaypointNavNode._NAVIGATE, self.node._state_handlers)
+        self.assertIn(WaypointNavNode._LAND, self.node._state_handlers)
 
     def test_stays_idle_before_10_cycles(self):
         for _ in range(9):
@@ -157,19 +195,44 @@ class TestStateMachine(unittest.TestCase):
             self.node._control_loop()
         self.assertEqual(self.node._state, WaypointNavNode._DONE)
 
+    def test_comm_loss_enters_failsafe(self):
+        self.node._state = WaypointNavNode._NAVIGATE
+        self.node._seen_status = True
+        self.node._seen_local_pos = True
+        self.node._last_status_loop = 0
+        self.node._last_local_pos_loop = 0
+        self.node._loop_cnt = self.node._comm_loss_timeout_cycles + 1
+        self.node._control_loop()
+        self.assertEqual(self.node._state, WaypointNavNode._FAILSAFE_LAND)
+
+    def test_waypoint_unreachable_skips_waypoint(self):
+        self.node._state = WaypointNavNode._NAVIGATE
+        self.node._wp_idx = 0
+        self.node._wp_progress_cnt = self.node._wp_unreachable_timeout_cycles
+        self.node._local_pos = _make_pos(999.0, 999.0, -999.0)
+        self.node._control_loop()
+        self.assertGreaterEqual(self.node._wp_idx, 1)
+
 
 class TestLandingCondition(unittest.TestCase):
     def setUp(self):
         self.node = WaypointNavNode()
 
     def test_is_landed_by_low_alt_and_speed(self):
+        self.node._use_kinematic_landing_fallback = True
         self.node._status.arming_state = 999
         self.node._local_pos = _make_pos(0.0, 0.0, -0.1, vx=0.1, vy=0.1, vz=0.1)
         self.assertTrue(self.node._is_landed())
 
     def test_not_landed_when_fast(self):
+        self.node._use_kinematic_landing_fallback = True
         self.node._status.arming_state = 999
         self.node._local_pos = _make_pos(0.0, 0.0, -0.1, vx=2.0, vy=0.0, vz=0.0)
+        self.assertFalse(self.node._is_landed())
+
+    def test_not_landed_on_low_hover_by_default(self):
+        self.node._status.arming_state = 999
+        self.node._local_pos = _make_pos(0.0, 0.0, -0.1, vx=0.0, vy=0.0, vz=0.0)
         self.assertFalse(self.node._is_landed())
 
 
