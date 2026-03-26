@@ -50,5 +50,5 @@ class TestTC007FullMission(unittest.TestCase):
             capture_output=True, text=True, timeout=10,
         )
         nodes = result.stdout
-        for expected in ['waypoint_nav', 'precision_task', 'yolo_detect', 'aruco_detect']:
+        for expected in ['waypoint_nav', 'yolo_detect', 'aruco_detect']:
             self.assertIn(expected, nodes, f"{expected} 노드가 실행되지 않음")

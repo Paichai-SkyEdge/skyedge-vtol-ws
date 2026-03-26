@@ -11,23 +11,21 @@ PX4 + Gazebo 기반 VTOL 시뮬레이션 환경을 실행하는 방법을 안내
 | 서비스 | 역할 |
 |--------|------|
 | `px4_sitl` | `jonasvautherin/px4-gazebo-headless` 이미지로 PX4 SITL + Gazebo Classic 실행. `VEHICLE=standard_vtol`, `PX4_UXRCE_DDS_NS=drone1` |
-| `xrce_agent` | Micro XRCE-DDS Agent (UDP 8888). PX4 내부 uORB 토픽 ↔ ROS2 토픽 브리지 역할 |
-| `vtol_sim` | 우리 ROS2 노드들 (`waypoint_nav`, `yolo`, `aruco` 등) |
+| `xrce_agent` | Micro XRCE-DDS Agent (UDP 8888). PX4 내부 uORB 토픽 ↔ ROS2 토픽 브리지 |
+| `vtol_sim` | ROS2 노드들 (`waypoint_nav`, `yolo_detect`, `aruco_detect`) |
 
 > `network_mode: host`를 사용하기 때문에 세 서비스가 별도 포트 포워딩 없이 서로 통신합니다.
 
 ---
 
-## 2. 방법 A: Docker (기본, headless)
-
-Gazebo 창 없이 물리 시뮬레이션만 실행하는 방법입니다. 가장 간단하고 권장되는 방식입니다.
+## 2. 방법 A: Docker (권장, headless)
 
 ```bash
+git submodule update --init --recursive
 docker compose -f docker/docker-compose.yml --profile sim up
 ```
 
-- Gazebo GUI 창은 뜨지 않으며, 물리 연산만 백그라운드에서 동작합니다.
-- 동작 확인:
+동작 확인:
 
 ```bash
 ros2 topic list | grep drone1
@@ -37,9 +35,9 @@ ros2 topic list | grep drone1
 
 ---
 
-## 3. 방법 B: Gazebo GUI 보기 (gzclient)
+## 3. 방법 B: Gazebo GUI 보기
 
-방법 A로 Docker 시뮬을 실행 중인 상태에서, 호스트 머신에 `gzclient`를 별도로 실행해 시각화할 수 있습니다.
+방법 A로 Docker 시뮬을 실행 중인 상태에서 호스트 머신에 `gzclient`를 별도 실행합니다.
 
 ```bash
 sudo apt install gazebo
@@ -50,11 +48,9 @@ gzclient
 
 ---
 
-## 4. 방법 C: 네이티브 실행 (개발용, GUI 포함)
+## 4. 방법 C: 네이티브 실행 (개발용)
 
-`setup.sh` 실행이 완료된 상태를 전제로 합니다.
-
-**터미널 1: PX4-Autopilot 클론 및 Gazebo 실행**
+**터미널 1: PX4-Autopilot + Gazebo**
 
 ```bash
 git clone --depth 1 --branch v1.14.3 https://github.com/PX4/PX4-Autopilot.git ~/PX4-Autopilot
@@ -63,31 +59,33 @@ bash Tools/setup/ubuntu.sh
 make px4_sitl_default gazebo-classic_standard_vtol
 ```
 
-**터미널 2: Micro XRCE-DDS Agent 실행**
+**터미널 2: Micro XRCE-DDS Agent**
 
 ```bash
 MicroXRCEAgent udp4 -p 8888
 ```
 
-**터미널 3: ROS2 노드 실행**
+**터미널 3: ROS2 노드**
 
 ```bash
-ros2 launch vtol_bringup sim_launch.py
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+ros2 launch vtol sim_launch.py
 ```
 
 ---
 
-## 5. 동작 확인 방법
+## 5. 동작 확인
 
 ```bash
 # PX4 토픽 확인
 ros2 topic list | grep drone1
 
 # 기체 상태 확인
-ros2 topic echo /drone1/fmu/out/vehicle_status --once
+ros2 topic echo /drone1/fmu/out/vehicle_status_v1 --once
 
 # 위치 확인
-ros2 topic echo /drone1/fmu/out/vehicle_local_position --once
+ros2 topic echo /drone1/fmu/out/vehicle_local_position_v1 --once
 ```
 
 ---
@@ -102,7 +100,7 @@ ros2 topic echo /drone1/fmu/out/vehicle_local_position --once
 
 ---
 
-## 7. 관련 문서
+## 관련 문서
 
 - [docker.md](docker.md) — Docker 환경 사용법
 - [architecture.md](architecture.md) — 전체 시스템 아키텍처

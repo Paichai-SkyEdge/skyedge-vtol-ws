@@ -55,6 +55,11 @@ class _VehicleStatus:
     ARMING_STATE_STANDBY = 1
     ARMING_STATE_ARMED   = 2
 
+    def __init__(self):
+        self.arming_state = self.ARMING_STATE_STANDBY
+        self.nav_state = 0
+        self.pre_flight_checks_pass = False
+
 
 class _VehicleCommand:
     """PX4 VehicleCommand 상수 (실제 px4_msgs 값과 동일)"""

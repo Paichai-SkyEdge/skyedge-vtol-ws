@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: 코드 체크아웃
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: 빌드 도구 및 ROS 의존성 설치
         run: |
@@ -70,6 +72,8 @@ jobs:
     steps:
       - name: 코드 체크아웃
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Docker Buildx 설정
         uses: docker/setup-buildx-action@v3

@@ -1,8 +1,7 @@
 """
-unit › vtol_vision_yolo › YoloDetectNode
+unit › vtol_vision › YoloDetectNode
 
 관련 명세: TC-002 상태 수신 / TC-007 통합 미션
-담당자:   비전 A
 
 구현 전 상태: skip — 아래 @unittest.skip 제거 후 구현 시작
 구현 후 목표: 전체 PASS
@@ -13,6 +12,8 @@ unit › vtol_vision_yolo › YoloDetectNode
   [ ] 바운딩 박스 추론
   [ ] vtol.yolo_confidence_threshold 파라미터로 필터링
   [ ] /vtol/yolo/detections (vision_msgs/Detection2DArray) 퍼블리시
+
+구현 파일: src/vtol_vision/src/yolo_detect_node.py
 """
 import sys
 import unittest
@@ -20,16 +21,16 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 _SKIP_REASON = (
-    "vtol_vision_yolo 노드는 아직 구현 전입니다. "
-    "초보자용 기본 브랜치를 항상 초록 상태로 유지하기 위해 현재는 skip 합니다. "
-    "비전 A 구현을 시작할 때 이 skip 을 제거하고 테스트를 함께 녹색으로 바꾸세요."
+    "vtol_vision YoloDetectNode 는 아직 구현 전입니다. "
+    "기본 브랜치를 항상 초록 상태로 유지하기 위해 현재는 skip 합니다. "
+    "구현을 시작할 때 이 skip 을 제거하고 테스트를 함께 녹색으로 바꾸세요."
 )
 
 sys.path.insert(0, str(Path(__file__).parents[1]))
 from mock_ros2 import install
 install()
 
-sys.path.insert(0, str(Path(__file__).parents[2] / 'src' / 'vtol_vision_yolo' / 'src'))
+sys.path.insert(0, str(Path(__file__).parents[2] / 'src' / 'vtol_vision' / 'src'))
 from yolo_detect_node import YoloDetectNode
 
 
