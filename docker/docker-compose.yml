@@ -52,7 +52,7 @@ services:
     command: >
       bash -c "source /opt/ros/humble/setup.bash &&
                source /vtol_ws/install/setup.bash &&
-               ros2 launch vtol_bringup sim_launch.py"
+               ros2 launch vtol sim_launch.py"
     depends_on:
       - xrce_agent
 
@@ -74,7 +74,7 @@ services:
     command: >
       bash -c "source /opt/ros/humble/setup.bash &&
                source /vtol_ws/install/setup.bash &&
-               ros2 launch vtol_bringup real_launch.py"
+               ros2 launch vtol real_launch.py"
 
   # ── Foxglove 브릿지 ───────────────────────────────────────────────
   foxglove_bridge:

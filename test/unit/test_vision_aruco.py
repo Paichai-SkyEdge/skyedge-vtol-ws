@@ -1,8 +1,7 @@
 """
-unit › vtol_vision_aruco › ArucoDetectNode
+unit › vtol_vision › ArucoDetectNode
 
 관련 명세: TC-002 상태 수신 / TC-007 통합 미션
-담당자:   비전 B
 
 구현 전 상태: skip — 아래 @unittest.skip 제거 후 구현 시작
 구현 후 목표: 전체 PASS
@@ -10,9 +9,10 @@ unit › vtol_vision_aruco › ArucoDetectNode
 구현 체크리스트:
   [ ] /drone1/camera/image_raw 구독
   [ ] cv2.aruco 로 마커 검출
-  [ ] 카메라 캘리브레이션 파라미터 적용
   [ ] /vtol/aruco/pose (geometry_msgs/PoseStamped) 퍼블리시
   [ ] vtol.aruco_marker_id 파라미터 사용
+
+구현 파일: src/vtol_vision/src/aruco_detect_node.py
 """
 import sys
 import unittest
@@ -20,16 +20,16 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 _SKIP_REASON = (
-    "vtol_vision_aruco 노드는 아직 구현 전입니다. "
-    "초보자용 기본 브랜치를 항상 초록 상태로 유지하기 위해 현재는 skip 합니다. "
-    "비전 B 구현을 시작할 때 이 skip 을 제거하고 테스트를 함께 녹색으로 바꾸세요."
+    "vtol_vision ArucoDetectNode 는 아직 구현 전입니다. "
+    "기본 브랜치를 항상 초록 상태로 유지하기 위해 현재는 skip 합니다. "
+    "구현을 시작할 때 이 skip 을 제거하고 테스트를 함께 녹색으로 바꾸세요."
 )
 
 sys.path.insert(0, str(Path(__file__).parents[1]))
 from mock_ros2 import install
 install()
 
-sys.path.insert(0, str(Path(__file__).parents[2] / 'src' / 'vtol_vision_aruco' / 'src'))
+sys.path.insert(0, str(Path(__file__).parents[2] / 'src' / 'vtol_vision' / 'src'))
 from aruco_detect_node import ArucoDetectNode
 
 

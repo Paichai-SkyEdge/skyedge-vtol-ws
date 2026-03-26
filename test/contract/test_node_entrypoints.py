@@ -5,12 +5,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 
 NODE_FILES = {
-    "vtol_vision_yolo": ROOT / "src" / "vtol_vision_yolo" / "src" / "yolo_detect_node.py",
-    "vtol_vision_aruco": ROOT / "src" / "vtol_vision_aruco" / "src" / "aruco_detect_node.py",
-    "vtol_control_nav": ROOT / "src" / "vtol_control_nav" / "src" / "waypoint_nav_node.py",
-    "vtol_control_task": ROOT / "src" / "vtol_control_task" / "src" / "precision_task_node.py",
-    "vtol_hw_gripper": ROOT / "src" / "vtol_hw_gripper" / "src" / "arduino_cmd_node.py",
-    "vtol_comm_lte": ROOT / "src" / "vtol_comm_lte" / "src" / "telemetry_node.py",
+    "vtol_waypoint_nav": ROOT / "src" / "vtol" / "src" / "waypoint_nav_node.py",
+    "vtol_vision_yolo":  ROOT / "src" / "vtol_vision" / "src" / "yolo_detect_node.py",
+    "vtol_vision_aruco": ROOT / "src" / "vtol_vision" / "src" / "aruco_detect_node.py",
 }
 
 
@@ -28,12 +25,9 @@ class NodeEntrypointTests(unittest.TestCase):
 
     def test_node_classes_match_expected_runtime_names(self):
         expected_classes = {
-            "vtol_vision_yolo": "class YoloDetectNode(Node):",
+            "vtol_waypoint_nav": "class WaypointNavNode(Node):",
+            "vtol_vision_yolo":  "class YoloDetectNode(Node):",
             "vtol_vision_aruco": "class ArucoDetectNode(Node):",
-            "vtol_control_nav": "class WaypointNavNode(Node):",
-            "vtol_control_task": "class PrecisionTaskNode(Node):",
-            "vtol_hw_gripper": "class ArduinoCmdNode(Node):",
-            "vtol_comm_lte": "class TelemetryNode(Node):",
         }
 
         for package_name, class_decl in expected_classes.items():

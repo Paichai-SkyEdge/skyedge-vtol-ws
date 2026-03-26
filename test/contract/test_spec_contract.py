@@ -14,10 +14,10 @@ ROOT = Path(__file__).resolve().parents[2]
 
 # 검증 대상 파일 경로
 TEST_SPEC = ROOT / "docs" / "test_spec.md"
-SIM_LAUNCH = ROOT / "src" / "vtol_bringup" / "launch" / "sim_launch.py"
-REAL_LAUNCH = ROOT / "src" / "vtol_bringup" / "launch" / "real_launch.py"
-GLOBAL_PARAMS = ROOT / "src" / "vtol_bringup" / "config" / "global_params.yaml"
-WAYPOINT_NAV = ROOT / "src" / "vtol_control_nav" / "src" / "waypoint_nav_node.py"
+SIM_LAUNCH = ROOT / "src" / "vtol" / "launch" / "sim_launch.py"
+REAL_LAUNCH = ROOT / "src" / "vtol" / "launch" / "real_launch.py"
+GLOBAL_PARAMS = ROOT / "src" / "vtol" / "config" / "global_params.yaml"
+WAYPOINT_NAV = ROOT / "src" / "vtol" / "src" / "waypoint_nav_node.py"
 
 
 class SpecContractTests(unittest.TestCase):
@@ -51,12 +51,11 @@ class SpecContractTests(unittest.TestCase):
     # ── 시뮬 런치 파일 ─────────────────────────────────────────────
 
     def test_sim_launch_contains_required_simulation_nodes(self):
-        """sim_launch.py 에 시뮬용 노드 5개와 TimerAction(3.0 s) 이 있어야 한다"""
+        """sim_launch.py 에 시뮬용 노드와 TimerAction(3.0 s) 이 있어야 한다"""
         launch_text = SIM_LAUNCH.read_text(encoding="utf-8")
 
         # 시뮬에서 기동해야 하는 패키지 목록
-        for pkg in ["vtol_control_nav", "vtol_control_task",
-                    "vtol_vision_yolo", "vtol_vision_aruco", "vtol_comm_lte"]:
+        for pkg in ["vtol", "vtol_vision"]:
             self.assertIn(f"package='{pkg}'", launch_text)
 
         # DDS 에이전트 준비 대기용 지연 액션
@@ -68,14 +67,12 @@ class SpecContractTests(unittest.TestCase):
 
     # ── 실기체 런치 파일 ───────────────────────────────────────────
 
-    def test_real_launch_contains_runtime_nodes_including_gripper(self):
-        """real_launch.py 에 그리퍼를 포함한 전체 노드와 use_sim=False 가 있어야 한다"""
+    def test_real_launch_contains_runtime_nodes(self):
+        """real_launch.py 에 필수 노드와 use_sim=False 가 있어야 한다"""
         launch_text = REAL_LAUNCH.read_text(encoding="utf-8")
 
-        # 실기체에서 기동해야 하는 패키지 목록 (그리퍼 포함)
-        for pkg in ["vtol_control_nav", "vtol_control_task",
-                    "vtol_vision_yolo", "vtol_vision_aruco",
-                    "vtol_hw_gripper", "vtol_comm_lte"]:
+        # 실기체에서 기동해야 하는 패키지 목록
+        for pkg in ["vtol", "vtol_vision"]:
             self.assertIn(f"package='{pkg}'", launch_text)
 
         # 실기체 모드 플래그

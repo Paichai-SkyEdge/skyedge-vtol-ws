@@ -1,159 +1,209 @@
 # VTOL 시스템 아키텍처
 
-이 문서는 이 저장소 안에 있는 패키지들이 어떤 역할을 하고, 서로 어떤 데이터를 주고받는지 설명합니다.
+## 개요
 
-처음 보는 사람이 빠르게 이해해야 할 핵심은 아래와 같습니다.
+본 문서는 Paichai SkyEdge VTOL 자율비행 시스템의 패키지 구조, 통신 토픽, 실행 방법을 설명합니다.
 
-- `vtol_bringup` 이 전체 실행 진입점입니다.
-- 비전 패키지들이 카메라 입력을 처리합니다.
-- 제어 패키지들이 PX4 또는 비전 결과를 바탕으로 기체를 제어합니다.
-- 하드웨어 / 통신 패키지는 외부 장치와 연결됩니다.
+---
 
-## PX4 통신 구조 (uXRCE-DDS)
+## 패키지 구조
 
-ROS2와 PX4는 직접 연결되지 않습니다. Micro XRCE-DDS Agent가 중간에서 브리지 역할을 합니다.
+```
+vtol_ws/
+├── src/
+│   ├── vtol/              # 통합 메인 패키지 (제어 + 런치 + 설정)
+│   └── vtol_vision/       # 비전 패키지 (Git 서브모듈)
+├── test/
+│   ├── contract/          # 구조 계약 테스트
+│   ├── unit/              # 단위 테스트
+│   └── integration/       # 통합 테스트 (시뮬 실행 필요)
+├── docker/                # Docker 컨테이너 설정
+└── docs/                  # 문서
+```
 
-```text
+### vtol (통합 메인 패키지)
+
+웨이포인트 네비게이션, 런치 파일, 전역 설정을 하나의 패키지로 통합합니다.
+
+```
+src/vtol/
+├── package.xml
+├── CMakeLists.txt
+├── launch/
+│   ├── sim_launch.py      # 시뮬레이션 런치
+│   └── real_launch.py     # 실기체 런치
+├── config/
+│   └── global_params.yaml # 전역 파라미터 (모든 노드 공통)
+└── src/
+    ├── waypoint_nav_node.py        # 웨이포인트 네비게이션 노드
+    ├── trajectory_planners/        # 궤적 계획 알고리즘
+    │   ├── base.py                 # 추상 인터페이스
+    │   ├── factory.py              # 팩토리 함수
+    │   ├── simple.py               # PointJump / Linear / Smoothstep
+    │   └── mpc_planner.py          # MPC 플래너
+    ├── precision_landing/          # 정밀 착륙 인터페이스 (확장용)
+    │   └── base.py
+    └── mission_executor/           # 웨이포인트별 임무 인터페이스 (확장용)
+        └── base.py
+```
+
+**빌드 진입점:**
+- `ros2 launch vtol sim_launch.py`
+- `ros2 launch vtol real_launch.py`
+
+### vtol_vision (비전 서브모듈)
+
+YOLO 객체 탐지와 ArUco 마커 인식을 담당하는 독립 Git 레포지토리입니다.
+
+```
+src/vtol_vision/           # Git 서브모듈
+├── package.xml
+├── CMakeLists.txt
+└── src/
+    ├── yolo_detect_node.py     # YOLO v8/v11 객체 탐지
+    └── aruco_detect_node.py    # ArUco 마커 6-DOF pose 추정
+```
+
+**서브모듈 초기화:**
+```bash
+git submodule update --init --recursive
+```
+
+---
+
+## 노드 목록
+
+| 노드명 | 패키지 | 실행파일 | 상태 |
+|--------|--------|---------|------|
+| `waypoint_nav` | `vtol` | `waypoint_nav_node` | ✅ 구현 완료 |
+| `yolo_detect` | `vtol_vision` | `yolo_detect_node` | ⏸ 구현 예정 |
+| `aruco_detect` | `vtol_vision` | `aruco_detect_node` | ⏸ 구현 예정 |
+
+---
+
+## PX4 통신 구조
+
+```
 PX4 SITL / 실기체
-    │  UDP 8888
+    │ UDP 8888
     ▼
-MicroXRCEAgent          ← xrce_agent 컨테이너 (또는 네이티브)
-    │  DDS
+Micro XRCE-DDS Agent  ←─ PX4 ↔ ROS2 브리지
+    │ DDS
     ▼
-ROS2 토픽 (/drone1/fmu/in|out/...)
-    │
-    ▼
-vtol_control_nav 등 ROS2 노드
+ROS2 토픽 네트워크
+    ├─ /drone1/fmu/out/*   (PX4 → ROS2)
+    │   ├─ vehicle_status
+    │   ├─ vehicle_local_position
+    │   └─ vehicle_odometry
+    └─ /drone1/fmu/in/*    (ROS2 → PX4)
+        ├─ offboard_control_mode
+        ├─ trajectory_setpoint
+        └─ vehicle_command
 ```
 
-- PX4 내부 uORB 토픽이 uXRCE-DDS를 통해 ROS2 토픽으로 노출됩니다.
-- 네임스페이스 `drone1`은 `PX4_UXRCE_DDS_NS=drone1`으로 설정됩니다.
-- 시뮬 실행 방법은 [simulation.md](simulation.md)를 참고하세요.
+## 인터-노드 토픽
 
-## 큰 흐름으로 보기
+| 토픽 | 타입 | 발행자 | 설명 |
+|------|------|--------|------|
+| `/vtol/yolo/detections` | `vision_msgs/Detection2DArray` | `yolo_detect` | YOLO 탐지 결과 |
+| `/vtol/aruco/pose` | `geometry_msgs/PoseStamped` | `aruco_detect` | ArUco 마커 pose |
 
-```text
-[PX4] ──uXRCE-DDS──> [MicroXRCEAgent] ──DDS──> ROS2 토픽
+---
 
-카메라 입력
-  ├─> vtol_vision_yolo   ──> 객체 탐지 결과
-  └─> vtol_vision_aruco  ──> 마커 위치 추정 결과
+## waypoint_nav 상태 머신
 
-PX4 상태 정보 (/drone1/fmu/out/...)
-  └─> vtol_control_nav   ──> 기체 명령 전송 (/drone1/fmu/in/...)
+```
+IDLE
+ └→ ARMING
+     └→ TAKEOFF
+         └→ TRANSITION_TO_FW
+             └→ NAVIGATE ──→ [MISSION_EXEC] (웨이포인트별 임무)
+                 └→ TRANSITION_TO_MC ──→ [PRECISION_LAND]
+                     └→ LAND
+                         └→ LANDING_CONFIRM
+                             └→ DONE
 
-비전 결과 + 상태 정보
-  └─> vtol_control_task  ──> 정밀 작업 / 착륙 / 그리퍼 명령
-
-작업 결과 / 상태
-  └─> vtol_comm_lte      ──> 지상국 또는 외부 시스템 전송
+오류 발생 시 → FAILSAFE_LAND
 ```
 
-## 패키지 의존 관계
+### 궤적 계획 알고리즘
 
-```text
-[vtol_bringup] ← 전체 통합 진입점
-      |
-      ├── [vtol_control_nav]    ← GPS/웨이포인트 제어
-      │         ↑ px4_msgs
-      ├── [vtol_control_task]   ← 정밀 착륙 / 작업 제어
-      │         ↑ vision_msgs (from vtol_vision_yolo / vtol_vision_aruco)
-      ├── [vtol_vision_yolo]    → /vtol/yolo/detections
-      ├── [vtol_vision_aruco]   → /vtol/aruco/pose
-      ├── [vtol_hw_gripper]     ← arduino serial
-      └── [vtol_comm_lte]       → GCS telemetry
+`global_params.yaml`의 `vtol.trajectory.type`으로 선택합니다.
+
+| 값 | 알고리즘 | 설명 |
+|----|---------|------|
+| `point_jump` | PointJumpPlanner | 즉시 목표 웨이포인트로 이동 |
+| `linear` | LinearPlanner | 일정 속도 선형 보간 |
+| `smoothstep` | SmoothstepPlanner | Smoothstep 3차 곡선 보간 (기본값) |
+| `mpc` | MPCPlanner | 모델 예측 제어 (이중 적분기 모델) |
+
+---
+
+## 실행 방법
+
+### 시뮬레이션
+
+```bash
+# 1. 서브모듈 초기화
+git submodule update --init --recursive
+
+# 2. 전체 스택 실행 (PX4 SITL + XRCE-DDS + ROS2 노드)
+docker compose -f docker/docker-compose.yml --profile sim up
+
+# 또는 ROS2 노드만 직접 실행
+source /opt/ros/humble/setup.bash
+colcon build --symlink-install
+source install/setup.bash
+ros2 launch vtol sim_launch.py
 ```
 
-## 패키지별 설명
+### 실기체
 
-### `vtol_bringup`
+```bash
+docker compose -f docker/docker-compose.yml --profile real up
+```
 
-전체 시스템을 실행하는 시작점입니다.
+### Foxglove 시각화
 
-- 시뮬레이션 런치
-- 실기체 런치
-- 여러 노드를 함께 실행하는 진입점
+```bash
+docker compose -f docker/docker-compose.yml up foxglove_bridge
+# 브라우저에서 Foxglove Studio → ws://localhost:8765
+```
 
-처음 실행할 때는 보통 이 패키지의 launch 파일을 기준으로 전체 시스템이 올라갑니다.
+---
 
-### `vtol_vision_yolo`
+## 테스트
 
-카메라 영상을 받아 YOLO 기반 객체 탐지를 수행합니다.
+```bash
+# 전체 테스트 (계약 + 단위, 통합은 자동 skip)
+python3 -m unittest discover -s test -v
 
-주요 역할:
+# 시뮬 실행 중 통합 테스트
+SIM_RUNNING=1 python3 -m unittest discover -s test -v
+```
 
-- 이미지 구독
-- 객체 탐지
-- 탐지 결과 발행
+### 테스트 레이어
 
-### `vtol_vision_aruco`
+| 레이어 | 경로 | 실행 조건 | 상태 |
+|--------|------|---------|------|
+| 계약 | `test/contract/` | 항상 | ✅ PASS 필수 |
+| 단위 | `test/unit/` | 항상 | ✅ waypoint_nav PASS |
+| 통합 | `test/integration/` | `SIM_RUNNING=1` | CI에서는 skip |
 
-카메라 영상에서 ArUco 마커를 인식하고 위치 정보를 계산합니다.
+---
 
-주요 역할:
+## 전역 파라미터 (global_params.yaml)
 
-- 이미지 구독
-- 마커 검출
-- 자세 또는 위치 정보 발행
+주요 파라미터 목록입니다. 수정 권한은 총괄에게 있습니다.
 
-### `vtol_control_nav`
+| 파라미터 | 기본값 | 설명 |
+|---------|--------|------|
+| `vtol.use_sim` | `true` | 시뮬/실기체 전환 |
+| `vtol.takeoff_altitude` | `5.0` | 이륙 고도 (m) |
+| `vtol.cruise_altitude` | `30.0` | 순항 고도 (m) |
+| `vtol.max_velocity` | `15.0` | 최대 속도 (m/s) |
+| `vtol.waypoint_frame` | `"gps"` | `gps` 또는 `local_ned` |
+| `vtol.trajectory.type` | `"smoothstep"` | 궤적 알고리즘 선택 |
+| `vtol.waypoints` | `[[lat,lon,alt], ...]` | 비행 웨이포인트 목록 |
 
-GPS, 위치, 웨이포인트 정보를 바탕으로 기체 이동 명령을 담당합니다.
-
-주요 역할:
-
-- PX4 상태 정보 구독
-- 이동 관련 명령 생성
-- PX4 제어 명령 발행
-
-### `vtol_control_task`
-
-정밀 작업이나 정밀 착륙처럼 상위 임무 제어를 담당합니다.
-
-주요 역할:
-
-- 비전 결과 활용
-- 특정 임무 단계 판단
-- 필요 시 그리퍼나 기체 제어로 연결
-
-### `vtol_hw_gripper`
-
-집게발 같은 하드웨어 장치를 직접 제어하는 패키지입니다.
-
-주요 역할:
-
-- 시리얼 통신
-- 그리퍼 열기 / 닫기 명령 처리
-
-### `vtol_comm_lte`
-
-LTE를 통해 상태나 텔레메트리 정보를 외부 시스템으로 보내는 패키지입니다.
-
-주요 역할:
-
-- 상태 정보 수집
-- 외부 전송
-
-## 주요 토픽 목록
-
-| 토픽 | 타입 | 발행자 | 구독자 | 설명 |
-|------|------|--------|--------|------|
-| `/drone1/fmu/out/vehicle_odometry` | `px4_msgs/VehicleOdometry` | PX4 | `vtol_control_nav` | 기체 위치 / 속도 정보 |
-| `/drone1/fmu/in/vehicle_command` | `px4_msgs/VehicleCommand` | `vtol_control_nav` | PX4 | 기체 제어 명령 |
-| `/drone1/camera/image_raw` | `sensor_msgs/Image` | 카메라 | `vtol_vision_yolo`, `vtol_vision_aruco` | 원본 카메라 영상 |
-| `/vtol/yolo/detections` | `vision_msgs/Detection2DArray` | `vtol_vision_yolo` | `vtol_control_task` | 객체 탐지 결과 |
-| `/vtol/aruco/pose` | `geometry_msgs/PoseStamped` | `vtol_vision_aruco` | `vtol_control_task` | 마커 기반 위치 추정 |
-| `/vtol/gripper/command` | `std_msgs/Int32` | `vtol_control_task` | `vtol_hw_gripper` | 그리퍼 제어 명령 |
-| `/drone1/fmu/out/monitoring` | `px4_msgs/...` | PX4 | `vtol_comm_lte` | 모니터링용 상태 데이터 |
-
-## 초보자가 읽을 때 추천 순서
-
-1. `vtol_bringup` 이 전체 시작점이라는 점 이해
-2. 카메라 입력이 `vtol_vision_yolo`, `vtol_vision_aruco` 로 들어간다는 점 이해
-3. 제어 패키지가 PX4 또는 비전 결과를 사용한다는 점 이해
-4. 하드웨어 / 통신 패키지가 외부 장치와 연결된다는 점 이해
-
-## 문서 읽는 팁
-
-- 특정 패키지를 맡았다면 해당 패키지 이름이 들어간 토픽부터 먼저 보면 이해가 빠릅니다.
-- 전체 실행이 안 될 때는 `vtol_bringup` 과 입력 토픽 연결부터 점검하는 것이 좋습니다.
+전체 파라미터는 [src/vtol/config/global_params.yaml](../src/vtol/config/global_params.yaml)을 참고하세요.

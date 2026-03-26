@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).parents[1]))
 from mock_ros2 import install, _VehicleStatus
 install()
 
-sys.path.insert(0, str(Path(__file__).parents[2] / 'src' / 'vtol_control_nav' / 'src'))
+sys.path.insert(0, str(Path(__file__).parents[2] / 'src' / 'vtol' / 'src'))
 from waypoint_nav_node import MissionPlanner, TrajectoryPlanner, WaypointNavNode
 
 
@@ -45,10 +45,18 @@ class TestInit(unittest.TestCase):
         self.assertIn('/drone1/fmu/in/vehicle_command', self.node._publishers)
 
     def test_subscribes_vehicle_status(self):
-        self.assertIn('/drone1/fmu/out/vehicle_status', self.node._subscriptions)
+        subs = self.node._subscriptions
+        self.assertTrue(
+            '/drone1/fmu/out/vehicle_status' in subs or
+            '/drone1/fmu/out/vehicle_status_v1' in subs,
+        )
 
     def test_subscribes_vehicle_local_position(self):
-        self.assertIn('/drone1/fmu/out/vehicle_local_position', self.node._subscriptions)
+        subs = self.node._subscriptions
+        self.assertTrue(
+            '/drone1/fmu/out/vehicle_local_position' in subs or
+            '/drone1/fmu/out/vehicle_local_position_v1' in subs,
+        )
 
     def test_takeoff_z_is_negative_ned(self):
         self.assertLess(self.node._takeoff_z, 0)
